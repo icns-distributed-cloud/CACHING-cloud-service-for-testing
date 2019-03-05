@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     message_local_client.loop_start()
 
-    message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
+    message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
     # publish.single("edge/client/" + client_id + "/data_req", 100, hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
 
     while not is_finish:
