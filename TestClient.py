@@ -96,9 +96,10 @@ if __name__ == '__main__':
 
     message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
 
+    message_local_client.loop_start()
+
     # message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
     publish.single("core/edge/" + client_id + "/data_req", 100, MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE)
-    message_local_client.loop_start()
 
     while not is_finish:
         time.sleep(0.001)
