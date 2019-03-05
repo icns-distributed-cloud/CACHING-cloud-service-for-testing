@@ -93,13 +93,14 @@ if __name__ == '__main__':
     message_local_client = mqtt.Client("Client")
     message_local_client.on_connect = on_local_connect
     message_local_client.on_message = on_local_message
+    message_local_client.on_publish = on_local_publish
 
     message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
 
     message_local_client.loop_start()
 
-    # message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
-    publish.single("core/edge/" + client_id + "/data_req", 100, MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE)
+    message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
+    # publish.single("edge/client/" + client_id + "/data_req", 100, hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
 
     while not is_finish:
         time.sleep(0.001)
