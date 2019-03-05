@@ -43,6 +43,12 @@ MQTT_PORT_ON_EDGE = 1883
 # ----------------------------------------Error calculation for PID controller---------------------------------------#
 TEST_TIME = 10  # sec
 
+is_finish = False
+is_running = False
+is_received = False
+
+condition = threading.Condition()
+
 
 # -------------------------------------------------------MQTT--------------------------------------------------------#
 def on_local_connect(client, userdata, flags, rc):
@@ -65,7 +71,9 @@ def on_local_message(client, userdata, msg):
     # print("Arrived message: %s" % message)
 
     if msg.topic == "edge/client/" + client_id + "/data":
-        print("Data size: %s" % len(message))
+        with condition:
+            print("Data size: %s" % len(message))
+            condition.notify()
         # time.sleep(0.03)
     elif msg.topic == "edge/client/" + client_id + "/start_caching":
         scenario_no = int(message)
@@ -97,25 +105,25 @@ def on_local_log(client, userdata, level, string):
 # publish.single("elevator/destination_floor_number", "2", hostname=MQTT_HOST, port=MQTT_PORT)
 # ------------------------------------------------------------------------------------------------------------------#
 
-is_finish = False
-is_running = False
 
-
-def consume_data_scenario1(mqtt):
+def consume_data_scenario1(mqtt_obj):
     # A cloud service periodically consumes an equal amount of cached data.
 
     start_time = time.time()
     read_size = (2 << 19)
-    while True:
-        # consume data
-        # This section will be changed to apply the distributed messaging structure.
-        # In other words, MQTT will be used.
-        mqtt.publish("edge/client/" + client_id + "/data_req", read_size)
-        # print("Consuming data")
-        running_time = time.time() - start_time
-        if running_time > TEST_TIME:
-            break
-        time.sleep(0.03)
+    with condition:
+        while True:
+            # consume data
+            # This section will be changed to apply the distributed messaging structure.
+            # In other words, MQTT will be used.
+
+            mqtt_obj.publish("edge/client/" + client_id + "/data_req", read_size)
+            condition.wait()
+            # print("Consuming data")
+            running_time = time.time() - start_time
+            if running_time > TEST_TIME:
+                break
+            time.sleep(0.03)
 
 
 if __name__ == '__main__':
