@@ -79,8 +79,9 @@ def on_local_message(client, userdata, msg):
         scenario_no = int(message)
         # Starting threads
         if scenario_no == 1:
-            is_running = True
             t1.start()
+            time.sleep(0.01)
+            is_running = True
         else:
             print("Unknown - scenario number: %s" % scenario_no)
 
