@@ -37,7 +37,7 @@ from paho.mqtt import publish
 
 client_id = "Client_1"
 
-MQTT_HOST_ON_EDGE = "127.0.0.1"
+MQTT_HOST_ON_EDGE = "192.168.0.58"
 MQTT_PORT_ON_EDGE = 1883
 
 # ----------------------------------------Error calculation for PID controller---------------------------------------#
@@ -96,7 +96,8 @@ if __name__ == '__main__':
 
     message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
 
-    message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
+    # message_local_client.publish("core/edge/" + client_id + "/data_req", 100)
+    publish.single("core/edge/" + client_id + "/data_req", 100, MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE)
     message_local_client.loop_start()
 
     while not is_finish:
