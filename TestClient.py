@@ -73,7 +73,7 @@ def on_local_message(client, userdata, msg):
     if msg.topic == "edge/client/" + client_id + "/data":
         with condition:
             print("Data size: %s" % len(message))
-            condition.notify()
+            condition.notifyall()
         # time.sleep(0.03)
     elif msg.topic == "edge/client/" + client_id + "/start_caching":
         scenario_no = int(message)
@@ -117,7 +117,6 @@ def consume_data_scenario1(mqtt_obj):
             # consume data
             # This section will be changed to apply the distributed messaging structure.
             # In other words, MQTT will be used.
-
             mqtt_obj.publish("edge/client/" + client_id + "/data_req", read_size)
             condition.wait()
             # print("Consuming data")
