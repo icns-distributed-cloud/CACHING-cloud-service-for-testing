@@ -49,6 +49,7 @@ def on_local_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected - Result code: " + str(rc))
         client.subscribe("edge/client/" + client_id + "/data")
+        client.subscribe("edge/client/" + client_id + "/start_caching")
 
     else:
         print("Bad connection returned code = ", rc)
@@ -64,6 +65,14 @@ def on_local_message(client, userdata, msg):
     if msg.topic == "edge/client/" + client_id + "/data":
         print("Data size: %s" % len(message))
         # time.sleep(0.03)
+    elif msg.topic == "edge/client/" + client_id + "/start_caching":
+        scenario_no = int(message)
+        # Starting threads
+        if scenario_no == 1:
+            t1.start()
+        else:
+            print("Unknown - scenario number: %s" % scenario_no)
+
     else:
         print("Unknown - topic: " + msg.topic + ", message: " + message)
 
@@ -87,6 +96,24 @@ def on_local_log(client, userdata, level, string):
 
 is_finish = False
 
+
+def consume_data_scenario1(mqtt):
+    # A cloud service periodically consumes an equal amount of cached data.
+
+    start_time = time.time()
+    read_size = (2 << 19)
+    while True:
+        # consume data
+        # This section will be changed to apply the distributed messaging structure.
+        # In other words, MQTT will be used.
+        mqtt.publish("edge/client/" + client_id + "/data_req", read_size)
+        # print("Consuming data")
+        running_time = time.time() - start_time
+        if running_time > TEST_TIME:
+            break
+        time.sleep(0.03)
+
+
 if __name__ == '__main__':
 
     # MQTT connection
@@ -99,11 +126,15 @@ if __name__ == '__main__':
 
     message_local_client.loop_start()
 
-    message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
+    # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
     # publish.single("edge/client/" + client_id + "/data_req", 100, hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
 
-    while not is_finish:
-        time.sleep(0.001)
+    # Creating threads
+    t1 = threading.Thread(target=consume_data_scenario1, args=[message_local_client])
+
+    # Wait until threads are completely executed
+    t1.join()
+    print("Test 1 is done!")
 
     message_local_client.loop_stop()
     # start_time = time.time()
