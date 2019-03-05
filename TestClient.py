@@ -57,6 +57,8 @@ def on_local_connect(client, userdata, flags, rc):
 
 
 def on_local_message(client, userdata, msg):
+
+    global is_running
     # print("Cart new message: " + msg.topic + " " + str(msg.payload))
     message = msg.payload
     print("Arrived topic: %s" % msg.topic)
@@ -69,6 +71,7 @@ def on_local_message(client, userdata, msg):
         scenario_no = int(message)
         # Starting threads
         if scenario_no == 1:
+            is_running = True
             t1.start()
         else:
             print("Unknown - scenario number: %s" % scenario_no)
@@ -95,6 +98,7 @@ def on_local_log(client, userdata, level, string):
 # ------------------------------------------------------------------------------------------------------------------#
 
 is_finish = False
+is_running = False
 
 
 def consume_data_scenario1(mqtt):
@@ -131,6 +135,8 @@ if __name__ == '__main__':
 
     # Creating threads
     t1 = threading.Thread(target=consume_data_scenario1, args=[message_local_client])
+    while not is_running:
+        time.sleep(0.005)
 
     # Wait until threads are completely executed
     t1.join()
