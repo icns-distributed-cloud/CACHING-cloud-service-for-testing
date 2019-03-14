@@ -27,11 +27,12 @@
 # ==============================================================================
 
 # import logging
+import csv
+import os
+import random
 import threading
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
 import paho.mqtt.client as mqtt
 from paho.mqtt import publish
 
@@ -96,7 +97,7 @@ def on_local_message(client, userdata, msg):
         # Starting threads
         print("Scenario number: % s" % scenario_no)
         if scenario_no == 1:
-            t1.start()
+            test_thread.start()
             time.sleep(0.05)
             is_running = True
         else:
@@ -145,6 +146,75 @@ def consume_data_scenario1(mqtt_obj):
             time.sleep(0.03)
 
 
+def consume_data_scenario2(mqtt_obj):
+    # A cloud service periodically consumes an equal amount of cached data.
+    global condition
+
+    start_time = time.time()
+    with condition:
+        while True:
+            # consume data
+            # This section will be changed to apply the distributed messaging structure.
+            # In other words, MQTT will be used.
+            # print("Request data")
+            val = random.randint(1, 4)
+            val2 = random.randint(17, 18)
+            read_size = (val << val2)  # 128KB ~ 1024KB(1MB)
+            mqtt_obj.publish("edge/client/" + client_id + "/data_req", read_size, qos=2)
+            condition.wait()
+            # print("Consuming data")
+            running_time = time.time() - start_time
+            if running_time > TEST_TIME:
+                break
+            time.sleep(0.03)
+
+
+def consume_data_scenario3(mqtt_obj):
+    # A cloud service periodically consumes an equal amount of cached data.
+    global condition
+
+    start_time = time.time()
+    read_size = (1 << 19)
+    with condition:
+        while True:
+            # consume data
+            # This section will be changed to apply the distributed messaging structure.
+            # In other words, MQTT will be used.
+            # print("Request data")
+            random_ms = random.randint(8, 80) / 1000.0  # about 120fps ~ 12fps
+            mqtt_obj.publish("edge/client/" + client_id + "/data_req", read_size, qos=2)
+            condition.wait()
+            # print("Consuming data")
+            running_time = time.time() - start_time
+            if running_time > TEST_TIME:
+                break
+            time.sleep(random_ms)
+
+
+def consume_data_scenario4(mqtt_obj):
+    # A cloud service periodically consumes an equal amount of cached data.
+    global condition
+
+    start_time = time.time()
+    with condition:
+        while True:
+            # consume data
+            # This section will be changed to apply the distributed messaging structure.
+            # In other words, MQTT will be used.
+            # print("Request data")
+            val = random.randint(1, 4)
+            val2 = random.randint(17, 18)
+            read_size = (val << val2)  # 128KB ~ 1024KB(1MB)
+            random_ms = random.randint(8, 80) / 1000.0  # about 120fps ~ 12fps
+            mqtt_obj.publish("edge/client/" + client_id + "/data_req", read_size, qos=2)
+            condition.wait()
+            # print("Consuming data")
+            running_time = time.time() - start_time
+            if running_time > TEST_TIME:
+                break
+            time.sleep(random_ms)
+
+
 if __name__ == '__main__':
 
     # MQTT connection
@@ -153,78 +223,109 @@ if __name__ == '__main__':
     message_local_client.on_message = on_local_message
     # message_local_client.on_publish = on_local_publish
 
-    message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
+    loop_counter = 0
+    loop_round = 1
+    cache_hit_ratios = []
+    trimmed_cache_hit_ratios = []
 
-    message_local_client.loop_start()
+    while loop_counter < loop_round:
 
-    # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
-    # publish.single("edge/client/" + client_id + "/data_req", 100, hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
+        message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
+        message_local_client.loop_start()
 
-    # Creating threads
-    t1 = threading.Thread(target=consume_data_scenario1, args=[message_local_client])
-    while not is_running:
-        time.sleep(0.005)
+        # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
+        # publish.single("edge/client/" + client_id + "/data_req", 100,
+        # hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
 
-    # Wait until threads are completely executed
-    t1.join()
-    print("Test 1 is done!")
+        # Creating threads
+        test_thread = threading.Thread(target=consume_data_scenario1, args=[message_local_client])
+        while not is_running:
+            time.sleep(0.005)
 
-    publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
-                   port=MQTT_PORT_ON_EDGE, qos=2)
-    time.sleep(3)
+        # Wait until threads are completely executed
+        test_thread.join()
+        print("Test 1 is done!")
 
-    trimmed_cache_hits_list = cache_hits_list[10:]
+        publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
+                       port=MQTT_PORT_ON_EDGE, qos=2)
+        time.sleep(3)
 
-    cache_hit_ratio = float(cache_hits_list.count(1)) / len(cache_hits_list) * 100.0
-    trimmed_cache_hit_ratio = float(trimmed_cache_hits_list.count(1)) / len(trimmed_cache_hits_list) * 100.0
+        message_local_client.loop_stop()
+        message_local_client.disconnect()
 
-    print("Cache hit ratio: %s" % cache_hit_ratio)
-    print("Cache hit ratio(Trimmed): %s" % trimmed_cache_hit_ratio)
+        trimmed_cache_hits_list = cache_hits_list[10:]
 
-    time_list = [i for i in range(1, len(trimmed_cache_hits_list)+1)]
+        cache_hit_ratio = float(cache_hits_list.count(1)) / len(cache_hits_list) * 100.0
+        trimmed_cache_hit_ratio = float(trimmed_cache_hits_list.count(1)) / len(trimmed_cache_hits_list) * 100.0
 
-    # time_sm = np.array(time_list)
-    # time_smooth = np.linspace(time_sm.min(), time_sm.max(), 300)
+        cache_hit_ratios.append(cache_hit_ratio)
+        trimmed_cache_hit_ratios.append(trimmed_cache_hit_ratio)
 
-    # feedback_smooth = spline(time_list, percentage_list, time_smooth)
-    # Using make_interp_spline to create BSpline
+        print("Cache hit ratio: %s" % cache_hit_ratio)
+        print("Cache hit ratio(Trimmed): %s" % trimmed_cache_hit_ratio)
 
-    # Smooth graph
-    # helper_x3 = make_interp_spline(time_list, percentage_feedback_list)
-    # feedback_smooth = helper_x3(time_smooth)
-    #
-    # helper_x3 = make_interp_spline(time_list, percentage_output_list)
-    # output_smooth = helper_x3(time_smooth)
-    #
-    # plt.plot(time_smooth, feedback_smooth, marker='o', markersize=3, linestyle='-')
-    # plt.plot(time_smooth, output_smooth, marker='o', markersize=3, linestyle='-')
-    # plt.plot(time_list, percentage_setpoint_list)
+        # time_list = [i for i in range(1, len(trimmed_cache_hits_list)+1)]
 
-    # # Real value graph
-    # plt.plot(time_list, trimmed_cache_hits_list, marker='o', markersize=3, linestyle='None')
-    #
-    # plt.xlim((1, len(trimmed_cache_hits_list)+1))
-    # # plt.ylim((min(percentage_list) - 0.5, max(percentage_list) + 0.5))
-    # # plt.ylim(0, 100)
-    # plt.xlabel('Round no.')
-    # plt.ylabel('Cache hit(Hit:1, Miss:0)')
-    # plt.title('Cache hits')
-    #
-    # # plt.ylim((1 - 0.5, 1 + 0.5))
-    #
-    # plt.grid(True)
-    # plt.show()
+        # time_sm = np.array(time_list)
+        # time_smooth = np.linspace(time_sm.min(), time_sm.max(), 300)
 
-    message_local_client.loop_stop()
-    # start_time = time.time()
-    # read_size = (2 << 19)
-    # while True:
-    #     # consume data
-    #     # This section will be changed to apply the distributed messaging structure.
-    #     # In other words, MQTT will be used.
-    #     message_client.publish("core/edge/" + client_id + "/data_req", read_size)
-    #     # print("Consuming data")
-    #     running_time = time.time() - start_time
-    #     if running_time > TEST_TIME:
-    #         break
-    #     time.sleep(0.03)
+        # feedback_smooth = spline(time_list, percentage_list, time_smooth)
+        # Using make_interp_spline to create BSpline
+
+        # Smooth graph
+        # helper_x3 = make_interp_spline(time_list, percentage_feedback_list)
+        # feedback_smooth = helper_x3(time_smooth)
+        #
+        # helper_x3 = make_interp_spline(time_list, percentage_output_list)
+        # output_smooth = helper_x3(time_smooth)
+        #
+        # plt.plot(time_smooth, feedback_smooth, marker='o', markersize=3, linestyle='-')
+        # plt.plot(time_smooth, output_smooth, marker='o', markersize=3, linestyle='-')
+        # plt.plot(time_list, percentage_setpoint_list)
+
+        # # Real value graph
+        # plt.plot(time_list, trimmed_cache_hits_list, marker='o', markersize=3, linestyle='None')
+        #
+        # plt.xlim((1, len(trimmed_cache_hits_list)+1))
+        # # plt.ylim((min(percentage_list) - 0.5, max(percentage_list) + 0.5))
+        # # plt.ylim(0, 100)
+        # plt.xlabel('Round no.')
+        # plt.ylabel('Cache hit(Hit:1, Miss:0)')
+        # plt.title('Cache hits')
+        #
+        # # plt.ylim((1 - 0.5, 1 + 0.5))
+        #
+        # plt.grid(True)
+        # plt.show()
+
+        # start_time = time.time()
+        # read_size = (2 << 19)
+        # while True:
+        #     # consume data
+        #     # This section will be changed to apply the distributed messaging structure.
+        #     # In other words, MQTT will be used.
+        #     message_client.publish("core/edge/" + client_id + "/data_req", read_size)
+        #     # print("Consuming data")
+        #     running_time = time.time() - start_time
+        #     if running_time > TEST_TIME:
+        #         break
+        #     time.sleep(0.03)
+        is_running = False
+        loop_counter += 1
+
+    print("A test is finished")
+    file_name = str(1) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
+    print(file_name)
+    full_path = os.path.join(os.path.join(".", "result"), file_name)
+    print(full_path)
+
+    avg_cache_hit_ratio = sum(cache_hit_ratios) / len(cache_hit_ratios)
+    avg_trimmed_cache_hit_ratio = sum(trimmed_cache_hit_ratios) / len(trimmed_cache_hit_ratios)
+
+    with open(full_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # print running time
+        writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
+        # print variance and stdev
+
+    csvfile.close()
