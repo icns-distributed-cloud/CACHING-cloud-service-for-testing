@@ -54,6 +54,8 @@ condition = threading.Condition()
 
 cache_hits_list = []
 
+cache_miss_delay = 0.03
+
 
 # -------------------------------------------------------MQTT--------------------------------------------------------#
 def on_local_connect(client, userdata, flags, rc):
@@ -71,6 +73,7 @@ def on_local_message(client, userdata, msg):
     global is_running
     global condition
     global cache_hits_list
+    global cache_miss_delay
 
     # print("Cart new message: " + msg.topic + " " + str(msg.payload))
     message = msg.payload
@@ -86,8 +89,11 @@ def on_local_message(client, userdata, msg):
             if message != "False".encode():
                 print("Data size: %s" % len(message))
                 cache_hits_list.append(1)
+                cache_miss_delay = 0.03
             else:
                 print("No data received(Message: %s)" % message)
+                time.sleep(cache_miss_delay)
+                cache_miss_delay += 0.03
                 cache_hits_list.append(0)
             # print("Data size: %s" % message)
             condition.notify()
