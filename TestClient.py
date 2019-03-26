@@ -230,10 +230,15 @@ if __name__ == '__main__':
     message_local_client.on_message = on_local_message
     # message_local_client.on_publish = on_local_publish
 
+    ################################################
+    # Scenario 1
+    ################################################
     loop_counter = 0
     loop_round = 9
     cache_hit_ratios = []
     trimmed_cache_hit_ratios = []
+
+    scenario_number = 1
 
     while loop_counter < loop_round:
 
@@ -246,12 +251,13 @@ if __name__ == '__main__':
 
         # Creating threads
         test_thread = threading.Thread(target=consume_data_scenario1, args=[message_local_client])
+
         while not is_running:
             time.sleep(0.005)
 
         # Wait until threads are completely executed
         test_thread.join()
-        print("Test 1 is done!")
+        print("Test  is done!")
 
         publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
                        port=MQTT_PORT_ON_EDGE, qos=2)
@@ -321,7 +327,7 @@ if __name__ == '__main__':
         loop_counter += 1
 
     print("A test is finished")
-    file_name = str(1) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
+    file_name = str(scenario_number) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
     print(file_name)
     full_path = os.path.join(os.path.join(".", "result"), file_name)
     print(full_path)
@@ -333,6 +339,211 @@ if __name__ == '__main__':
         writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         # print running time
         writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
-        # print variance and stdev
+        for idx in range(len(cache_hits_list)):
+            writer.writerow(cache_hits_list[idx])
+
+    csvfile.close()
+
+    ################################################
+    # Scenario 2
+    ################################################
+    loop_counter = 0
+    loop_round = 9
+    cache_hit_ratios = []
+    trimmed_cache_hit_ratios = []
+
+    scenario_number = 2
+
+    while loop_counter < loop_round:
+
+        message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
+        message_local_client.loop_start()
+
+        # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
+        # publish.single("edge/client/" + client_id + "/data_req", 100,
+        # hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
+
+        # Creating threads
+        test_thread = threading.Thread(target=consume_data_scenario2, args=[message_local_client])
+
+        while not is_running:
+            time.sleep(0.005)
+
+        # Wait until threads are completely executed
+        test_thread.join()
+        print("Test  is done!")
+
+        publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
+                       port=MQTT_PORT_ON_EDGE, qos=2)
+        time.sleep(3)
+
+        message_local_client.loop_stop()
+        message_local_client.disconnect()
+
+        trimmed_cache_hits_list = cache_hits_list[10:]
+
+        cache_hit_ratio = float(cache_hits_list.count(1)) / len(cache_hits_list) * 100.0
+        trimmed_cache_hit_ratio = float(trimmed_cache_hits_list.count(1)) / len(trimmed_cache_hits_list) * 100.0
+
+        cache_hit_ratios.append(cache_hit_ratio)
+        trimmed_cache_hit_ratios.append(trimmed_cache_hit_ratio)
+
+        print("Cache hit ratio: %s" % cache_hit_ratio)
+        print("Cache hit ratio(Trimmed): %s" % trimmed_cache_hit_ratio)
+
+        is_running = False
+        loop_counter += 1
+
+    print("A test is finished")
+    file_name = str(scenario_number) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
+    print(file_name)
+    full_path = os.path.join(os.path.join(".", "result"), file_name)
+    print(full_path)
+
+    avg_cache_hit_ratio = sum(cache_hit_ratios) / len(cache_hit_ratios)
+    avg_trimmed_cache_hit_ratio = sum(trimmed_cache_hit_ratios) / len(trimmed_cache_hit_ratios)
+
+    with open(full_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # print running time
+        writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
+        for idx in range(len(cache_hits_list)):
+            writer.writerow(cache_hits_list[idx])
+
+    csvfile.close()
+
+    ################################################
+    # Scenario 3
+    ################################################
+    loop_counter = 0
+    loop_round = 9
+    cache_hit_ratios = []
+    trimmed_cache_hit_ratios = []
+
+    scenario_number = 3
+
+    while loop_counter < loop_round:
+
+        message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
+        message_local_client.loop_start()
+
+        # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
+        # publish.single("edge/client/" + client_id + "/data_req", 100,
+        # hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
+
+        # Creating threads
+        test_thread = threading.Thread(target=consume_data_scenario3, args=[message_local_client])
+
+        while not is_running:
+            time.sleep(0.005)
+
+        # Wait until threads are completely executed
+        test_thread.join()
+        print("Test  is done!")
+
+        publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
+                       port=MQTT_PORT_ON_EDGE, qos=2)
+        time.sleep(3)
+
+        message_local_client.loop_stop()
+        message_local_client.disconnect()
+
+        trimmed_cache_hits_list = cache_hits_list[10:]
+
+        cache_hit_ratio = float(cache_hits_list.count(1)) / len(cache_hits_list) * 100.0
+        trimmed_cache_hit_ratio = float(trimmed_cache_hits_list.count(1)) / len(trimmed_cache_hits_list) * 100.0
+
+        cache_hit_ratios.append(cache_hit_ratio)
+        trimmed_cache_hit_ratios.append(trimmed_cache_hit_ratio)
+
+        print("Cache hit ratio: %s" % cache_hit_ratio)
+        print("Cache hit ratio(Trimmed): %s" % trimmed_cache_hit_ratio)
+
+        is_running = False
+        loop_counter += 1
+
+    print("A test is finished")
+    file_name = str(scenario_number) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
+    print(file_name)
+    full_path = os.path.join(os.path.join(".", "result"), file_name)
+    print(full_path)
+
+    avg_cache_hit_ratio = sum(cache_hit_ratios) / len(cache_hit_ratios)
+    avg_trimmed_cache_hit_ratio = sum(trimmed_cache_hit_ratios) / len(trimmed_cache_hit_ratios)
+
+    with open(full_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # print running time
+        writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
+        for idx in range(len(cache_hits_list)):
+            writer.writerow(cache_hits_list[idx])
+
+    csvfile.close()
+
+    ################################################
+    # Scenario 4
+    ################################################
+    loop_counter = 0
+    loop_round = 9
+    cache_hit_ratios = []
+    trimmed_cache_hit_ratios = []
+
+    scenario_number = 4
+
+    while loop_counter < loop_round:
+
+        message_local_client.connect(MQTT_HOST_ON_EDGE, MQTT_PORT_ON_EDGE, 60)
+        message_local_client.loop_start()
+
+        # message_local_client.publish("edge/client/" + client_id + "/data_req", 100)
+        # publish.single("edge/client/" + client_id + "/data_req", 100,
+        # hostname=MQTT_HOST_ON_EDGE, port=MQTT_PORT_ON_EDGE)
+
+        # Creating threads
+        test_thread = threading.Thread(target=consume_data_scenario4, args=[message_local_client])
+
+        while not is_running:
+            time.sleep(0.005)
+
+        # Wait until threads are completely executed
+        test_thread.join()
+        print("Test  is done!")
+
+        publish.single("edge/client/" + client_id + "/done_to_test", "done", hostname=MQTT_HOST_ON_EDGE,
+                       port=MQTT_PORT_ON_EDGE, qos=2)
+        time.sleep(3)
+
+        message_local_client.loop_stop()
+        message_local_client.disconnect()
+
+        trimmed_cache_hits_list = cache_hits_list[10:]
+
+        cache_hit_ratio = float(cache_hits_list.count(1)) / len(cache_hits_list) * 100.0
+        trimmed_cache_hit_ratio = float(trimmed_cache_hits_list.count(1)) / len(trimmed_cache_hits_list) * 100.0
+
+        cache_hit_ratios.append(cache_hit_ratio)
+        trimmed_cache_hit_ratios.append(trimmed_cache_hit_ratio)
+
+        print("Cache hit ratio: %s" % cache_hit_ratio)
+        print("Cache hit ratio(Trimmed): %s" % trimmed_cache_hit_ratio)
+
+        is_running = False
+        loop_counter += 1
+
+    print("A test is finished")
+    file_name = str(scenario_number) + "-" + time.strftime("%Y%m%d%H%M%S") + ".csv"
+    print(file_name)
+    full_path = os.path.join(os.path.join(".", "result"), file_name)
+    print(full_path)
+
+    avg_cache_hit_ratio = sum(cache_hit_ratios) / len(cache_hit_ratios)
+    avg_trimmed_cache_hit_ratio = sum(trimmed_cache_hit_ratios) / len(trimmed_cache_hit_ratios)
+
+    with open(full_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        # print running time
+        writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
+        for idx in range(len(cache_hits_list)):
+            writer.writerow(cache_hits_list[idx])
 
     csvfile.close()
