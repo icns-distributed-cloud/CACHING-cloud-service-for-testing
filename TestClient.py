@@ -103,6 +103,7 @@ def on_local_message(client, userdata, msg):
         # Starting threads
         print("Scenario number: % s" % scenario_no)
         if scenario_no == 1:
+            time.sleep(1)   # cache preparation time,and then continuously request data on the following thread.
             test_thread.start()
             time.sleep(0.05)
             is_running = True
@@ -230,7 +231,7 @@ if __name__ == '__main__':
     # message_local_client.on_publish = on_local_publish
 
     loop_counter = 0
-    loop_round = 1
+    loop_round = 9
     cache_hit_ratios = []
     trimmed_cache_hit_ratios = []
 
