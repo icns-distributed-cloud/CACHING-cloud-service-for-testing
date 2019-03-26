@@ -340,7 +340,7 @@ if __name__ == '__main__':
         # print running time
         writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
         for idx in range(len(cache_hits_list)):
-            writer.writerow(cache_hits_list[idx])
+            writer.writerow([cache_hits_list[idx]])
 
     csvfile.close()
 
@@ -408,7 +408,7 @@ if __name__ == '__main__':
         # print running time
         writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
         for idx in range(len(cache_hits_list)):
-            writer.writerow(cache_hits_list[idx])
+            writer.writerow([cache_hits_list[idx]])
 
     csvfile.close()
 
@@ -476,7 +476,7 @@ if __name__ == '__main__':
         # print running time
         writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
         for idx in range(len(cache_hits_list)):
-            writer.writerow(cache_hits_list[idx])
+            writer.writerow([cache_hits_list[idx]])
 
     csvfile.close()
 
@@ -544,6 +544,6 @@ if __name__ == '__main__':
         # print running time
         writer.writerow([avg_cache_hit_ratio, avg_trimmed_cache_hit_ratio])
         for idx in range(len(cache_hits_list)):
-            writer.writerow(cache_hits_list[idx])
+            writer.writerow([cache_hits_list[idx]])
 
     csvfile.close()
