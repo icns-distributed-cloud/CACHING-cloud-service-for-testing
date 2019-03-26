@@ -103,7 +103,7 @@ def on_local_message(client, userdata, msg):
         # Starting threads
         print("Scenario number: % s" % scenario_no)
         if scenario_no == 1:
-            time.sleep(1)   # cache preparation time,and then continuously request data on the following thread.
+            # time.sleep(1)   # cache preparation time,and then continuously request data on the following thread.
             test_thread.start()
             time.sleep(0.05)
             is_running = True
