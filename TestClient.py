@@ -1,4 +1,6 @@
 # This file is part of Qualified Caching-as-a-Service.
+# BSD 3-Clause License
+#
 # Copyright (c) 2019, Intelligent-distributed Cloud and Security Laboratory (ICNS Lab.)
 # All rights reserved.
 #
